@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>USA National Attractions</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&family=Raleway:wght@500&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #filter-container {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        #designation-filter {
+            padding: 6px;
+            font-size: 0.8em;
+            margin-right: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        #parks-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 cards per row */
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .state-card {
+            background-color: #f0f8ff; /* Light blue background */
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px; /* Fixed square size */
+            height: 550px; /* Slightly taller to fit content */
+            overflow: hidden;
+            transition: transform 0.2s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .state-card:hover {
+            transform: scale(1.03);
+        }
+
+        .state-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            font-family: 'Raleway', sans-serif; /* Nicer font for titles */
+            text-align: center;
+        }
+
+        .park-list {
+            text-align: left;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .park-list ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+        .park-link {
+            display: list-item;
+            color: #333;
+            margin: 3px 0;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .park-link:hover {
+            color: #007BFF;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>USA National Attractions</h1>
+    <div id="filter-container">
+        <label for="designation-filter">Filter by Attraction Type:</label>
+        <select id="designation-filter" onchange="filterParks()">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <div id="parks-container"></div>
+
+    <script>
+        // Mapping of state abbreviations to full state names
+        const stateNameMapping = {
+            "AL": "Alabama",
+            "AK": "Alaska",
+            "AZ": "Arizona",
+            "AR": "Arkansas",
+            "CA": "California",
+            "CO": "Colorado",
+            "CT": "Connecticut",
+            "DE": "Delaware",
+            "FL": "Florida",
+            "GA": "Georgia",
+            "HI": "Hawaii",
+            "ID": "Idaho",
+            "IL": "Illinois",
+            "IN": "Indiana",
+            "IA": "Iowa",
+            "KS": "Kansas",
+            "KY": "Kentucky",
+            "LA": "Louisiana",
+            "ME": "Maine",
+            "MD": "Maryland",
+            "MA": "Massachusetts",
+            "MI": "Michigan",
+            "MN": "Minnesota",
+            "MS": "Mississippi",
+            "MO": "Missouri",
+            "MT": "Montana",
+            "NE": "Nebraska",
+            "NV": "Nevada",
+            "NH": "New Hampshire",
+            "NJ": "New Jersey",
+            "NM": "New Mexico",
+            "NY": "New York",
+            "NC": "North Carolina",
+            "ND": "North Dakota",
+            "OH": "Ohio",
+            "OK": "Oklahoma",
+            "OR": "Oregon",
+            "PA": "Pennsylvania",
+            "RI": "Rhode Island",
+            "SC": "South Carolina",
+            "SD": "South Dakota",
+            "TN": "Tennessee",
+            "TX": "Texas",
+            "UT": "Utah",
+            "VT": "Vermont",
+            "VA": "Virginia",
+            "WA": "Washington",
+            "WV": "West Virginia",
+            "WI": "Wisconsin",
+            "WY": "Wyoming"
+        };
+
+        // Fetch and populate designations in the dropdown
+        fetch('/get_designations')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('designation-filter');
+                data.forEach(designation => {
+                    const option = document.createElement('option');
+                    option.value = designation;
+                    option.textContent = designation;
+                    select.appendChild(option);
+                });
+            });
+
+        // Fetch parks and populate the grid
+        function filterParks() {
+            const designation = document.getElementById('designation-filter').value;
+            const url = designation ? `/get_parks_by_designation?designation=${designation}` : '/get_all_parks';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('parks-container');
+                    container.innerHTML = '';
+
+                    for (const [stateAbbreviation, parks] of Object.entries(data)) {
+                        // Get full state name from the mapping
+                        const stateName = stateNameMapping[stateAbbreviation] || stateAbbreviation;
+
+                        // Create the state card
+                        const card = document.createElement('div');
+                        card.className = 'state-card';
+
+                        // State header (full state name)
+                        const header = document.createElement('div');
+                        header.className = 'state-header';
+                        header.textContent = stateName;
+
+                        card.appendChild(header);
+
+                        // Park list
+                        const parkList = document.createElement('div');
+                        parkList.className = 'park-list';
+
+                        const ul = document.createElement('ul');
+                        parks.forEach(park => {
+                            const li = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.className = 'park-link';
+                            link.href = `/get_park_details?park_code=${park.park_code}`;
+                            link.textContent = park.full_name;
+                            li.appendChild(link);
+                            ul.appendChild(li);
+                        });
+                        parkList.appendChild(ul);
+                        card.appendChild(parkList);
+
+                        container.appendChild(card);
+                    }
+                });
+        }
+
+        // Load all parks on page load
+        filterParks();
+    </script
+</body>
+</html>
